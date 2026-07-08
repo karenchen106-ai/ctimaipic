@@ -1,4 +1,4 @@
-javascript// Vercel Serverless Function
+// Vercel Serverless Function
 // 這個檔案在「伺服器端」執行,使用者的瀏覽器完全看不到這段程式碼,
 // 也看不到 GEMINI_API_KEY(金鑰是從 Vercel 後台的環境變數讀取的,不是寫在這裡)。
 
