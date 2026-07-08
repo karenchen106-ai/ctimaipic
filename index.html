@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0">
+<title>AI 拜年圖產生器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --red: #B8272C;
+    --red-dark: #8C1D21;
+    --gold: #D4A24C;
+    --gold-light: #E8C97E;
+    --paper: #FBF3E3;
+    --ink: #241E1B;
+    --ink-soft: #5A4F47;
+    --green: #2F5233;
+    --radius: 18px;
+    --shadow: 0 8px 24px rgba(36,30,27,0.18);
+  }
+
+  *{box-sizing:border-box;}
+
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 15% 8%, rgba(212,162,76,0.16), transparent 45%),
+      radial-gradient(circle at 90% 85%, rgba(184,39,44,0.10), transparent 50%),
+      var(--paper);
+    font-family:'Noto Sans TC', sans-serif;
+    color:var(--ink);
+    display:flex;
+    justify-content:center;
+    padding:0 0 60px;
+  }
+
+  .app{ width:100%; max-width:560px; position:relative; }
+
+  header{
+    padding:28px 20px 22px;
+    text-align:center;
+  }
+
+  h1{
+    font-family:'Ma Shan Zheng', cursive;
+    font-size:44px;
+    margin:6px 0 4px;
+    color:var(--red);
+    letter-spacing:2px;
+  }
+  header p{
+    font-size:17px;
+    color:var(--ink-soft);
+    margin:0;
+  }
+
+  .fu-badge{
+    display:inline-flex;
+    align-items:center; justify-content:center;
+    width:56px; height:56px;
+    background:var(--red);
+    color:var(--gold-light);
+    font-family:'Ma Shan Zheng', cursive;
+    font-size:30px;
+    border-radius:10px;
+    transform:rotate(-6deg);
+    box-shadow:var(--shadow);
+    border:2px solid var(--gold);
+  }
+
+  .card{
+    background:#fff;
+    margin:16px 20px;
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:22px;
+    border:1px solid rgba(212,162,76,0.35);
+  }
+
+  .step-label{
+    display:flex; align-items:center; gap:10px;
+    font-size:20px; font-weight:700;
+    margin-bottom:14px;
+    color:var(--red-dark);
+  }
+  .step-num{
+    width:32px; height:32px;
+    border-radius:50%;
+    background:var(--red);
+    color:#fff;
+    font-size:17px; font-weight:900;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+
+  .upload-zone{
+    border:3px dashed var(--gold);
+    border-radius:14px;
+    background:#FFFBF3;
+    min-height:180px;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    gap:10px;
+    cursor:pointer;
+    text-align:center;
+    padding:16px;
+    transition:background .15s;
+  }
+  .upload-zone:active{ background:#FDF1DC; }
+  .upload-zone .icon{ font-size:44px; }
+  .upload-zone .txt{ font-size:19px; font-weight:700; color:var(--ink); }
+  .upload-zone .sub{ font-size:15px; color:var(--ink-soft); }
+
+  .preview-wrap{ position:relative; }
+  .preview-wrap img{
+    width:100%; max-height:320px; object-fit:cover;
+    border-radius:14px; display:block;
+    border:2px solid var(--gold);
+  }
+  .change-btn{
+    margin-top:12px;
+    width:100%;
+    padding:14px;
+    font-size:17px; font-weight:700;
+    border-radius:12px;
+    border:2px solid var(--red);
+    background:#fff; color:var(--red);
+    cursor:pointer;
+  }
+  .change-btn:active{ background:#FBEAEA; }
+
+  #fileInput{ display:none; }
+
+  .generate-btn{
+    padding:22px;
+    font-size:24px;
+    font-weight:900;
+    font-family:'Noto Sans TC', sans-serif;
+    letter-spacing:4px;
+    color:#fff;
+    background:linear-gradient(155deg, var(--red) 0%, var(--red-dark) 100%);
+    border:none;
+    border-radius:16px;
+    box-shadow: 0 10px 22px rgba(140,29,33,0.4);
+    cursor:pointer;
+    margin:22px 20px 6px;
+    width:calc(100% - 40px);
+    transition:transform .12s;
+  }
+  .generate-btn:active{ transform:scale(0.97); }
+  .generate-btn:disabled{
+    background:#CFC4B8; box-shadow:none; cursor:not-allowed;
+  }
+
+  .hint{
+    text-align:center;
+    font-size:15px;
+    color:var(--ink-soft);
+    margin:0 24px 10px;
+  }
+
+  .loading-box{
+    text-align:center;
+    padding:40px 20px;
+  }
+  .lantern{
+    font-size:60px;
+    display:inline-block;
+    animation:swing 1.4s ease-in-out infinite;
+  }
+  @keyframes swing{
+    0%,100%{ transform:rotate(-8deg); }
+    50%{ transform:rotate(8deg); }
+  }
+  .loading-box .msg{
+    font-size:19px; font-weight:700;
+    color:var(--red-dark);
+    margin-top:16px;
+  }
+
+  .result-img{
+    width:100%; border-radius:14px;
+    border:3px solid var(--gold);
+    display:block;
+    box-shadow:var(--shadow);
+  }
+  .result-actions{
+    display:flex; gap:12px; margin-top:16px;
+  }
+  .result-actions button{
+    flex:1;
+    padding:18px 10px;
+    font-size:18px; font-weight:700;
+    border-radius:12px;
+    cursor:pointer;
+    border:2px solid var(--gold);
+  }
+  .btn-download{ background:var(--gold); color:#fff; border-color:var(--gold); }
+  .btn-retry{ background:#fff; color:var(--red); border-color:var(--red); }
+
+  .error-box{
+    background:#FDECEC;
+    border:2px solid #E39494;
+    border-radius:14px;
+    padding:18px;
+    font-size:16px;
+    color:#8C1D21;
+    line-height:1.6;
+  }
+
+  .hidden{ display:none !important; }
+
+  footer{
+    text-align:center;
+    font-size:13px;
+    color:var(--ink-soft);
+    margin-top:10px;
+    padding:0 30px;
+    line-height:1.7;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div class="fu-badge">福</div>
+    <h1>AI 拜年圖產生器</h1>
+    <p>上傳一張照片,一鍵生成專屬您的中國風拜年賀卡</p>
+  </header>
+
+  <!-- Step 1: Upload -->
+  <div class="card" id="uploadCard">
+    <div class="step-label"><span class="step-num">1</span>上傳您的照片</div>
+
+    <div class="upload-zone" id="uploadZone">
+      <div class="icon">📷</div>
+      <div class="txt">點這裡選擇照片</div>
+      <div class="sub">可直接拍照,或從相簿選擇</div>
+    </div>
+
+    <div class="preview-wrap hidden" id="previewWrap">
+      <img id="previewImg" alt="您上傳的照片預覽">
+      <button class="change-btn" id="changePhotoBtn">重新選擇照片</button>
+    </div>
+
+    <input type="file" id="fileInput" accept="image/*" capture="environment">
+  </div>
+
+  <!-- Step 2: Generate -->
+  <div class="card" id="generateCard">
+    <div class="step-label"><span class="step-num">2</span>一鍵生成拜年圖</div>
+    <button class="generate-btn" id="generateBtn" disabled>🧧 開始生成</button>
+    <p class="hint" id="generateHint">請先完成上方「上傳照片」步驟</p>
+  </div>
+
+  <!-- Loading -->
+  <div class="card hidden" id="loadingCard">
+    <div class="loading-box">
+      <span class="lantern">🏮</span>
+      <div class="msg">正在為您繪製精美拜年圖,請稍候…</div>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="card hidden" id="errorCard">
+    <div class="error-box" id="errorText"></div>
+    <button class="change-btn" id="errorRetryBtn" style="margin-top:14px;">再試一次</button>
+  </div>
+
+  <!-- Result -->
+  <div class="card hidden" id="resultCard">
+    <div class="step-label"><span class="step-num">3</span>大功告成!</div>
+    <img class="result-img" id="resultImg" alt="生成的拜年圖">
+    <div class="result-actions">
+      <button class="btn-download" id="downloadBtn">⬇ 下載圖片</button>
+      <button class="btn-retry" id="retryBtn">🔄 重新生成</button>
+    </div>
+  </div>
+
+  <footer>本頁面由伺服器安全代為呼叫 AI 圖像生成服務,您不需要輸入任何金鑰。</footer>
+</div>
+
+<script>
+(function(){
+  let uploadedBase64 = "";
+  let uploadedMime = "image/jpeg";
+
+  const el = (id) => document.getElementById(id);
+
+  const uploadZone = el('uploadZone');
+  const fileInput = el('fileInput');
+  const previewWrap = el('previewWrap');
+  const previewImg = el('previewImg');
+  const changePhotoBtn = el('changePhotoBtn');
+
+  const generateBtn = el('generateBtn');
+  const generateHint = el('generateHint');
+
+  const loadingCard = el('loadingCard');
+  const errorCard = el('errorCard');
+  const errorText = el('errorText');
+  const errorRetryBtn = el('errorRetryBtn');
+  const resultCard = el('resultCard');
+  const resultImg = el('resultImg');
+  const downloadBtn = el('downloadBtn');
+  const retryBtn = el('retryBtn');
+
+  function updateGenerateState(){
+    const ready = !!uploadedBase64;
+    generateBtn.disabled = !ready;
+    generateHint.textContent = ready ? "準備就緒,可以開始生成囉!" : "請先完成上方「上傳照片」步驟";
+  }
+
+  // ---- Upload ----
+  uploadZone.addEventListener('click', () => fileInput.click());
+  changePhotoBtn.addEventListener('click', () => fileInput.click());
+
+  // 在手機上直接拍的照片檔案通常很大(好幾 MB),
+  // 這裡用 canvas 先縮小、壓縮,傳輸更快也更不容易失敗。
+  function resizeImageFile(file, maxDim = 1280, quality = 0.85){
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = (ev) => { img.src = ev.target.result; };
+      reader.onerror = reject;
+      img.onload = () => {
+        let { width, height } = img;
+        if(width > height && width > maxDim){
+          height = Math.round(height * (maxDim / width));
+          width = maxDim;
+        } else if(height >= width && height > maxDim){
+          width = Math.round(width * (maxDim / height));
+          height = maxDim;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve({ dataUrl, mime: 'image/jpeg' });
+      };
+      img.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    try{
+      const { dataUrl, mime } = await resizeImageFile(file);
+      uploadedMime = mime;
+      uploadedBase64 = dataUrl.split(',')[1];
+      previewImg.src = dataUrl;
+      uploadZone.classList.add('hidden');
+      previewWrap.classList.remove('hidden');
+      updateGenerateState();
+    } catch(err){
+      console.error(err);
+      alert("這張照片讀取失敗,請換一張試試看。");
+    }
+  });
+
+  // ---- Generate ----
+  function showState(state){
+    [loadingCard, errorCard, resultCard].forEach(c => c.classList.add('hidden'));
+    if(state === 'loading') loadingCard.classList.remove('hidden');
+    if(state === 'error') errorCard.classList.remove('hidden');
+    if(state === 'result') resultCard.classList.remove('hidden');
+  }
+
+  async function generateImage(){
+    showState('loading');
+    generateBtn.disabled = true;
+
+    try {
+      const resp = await fetch("/.netlify/functions/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64: uploadedBase64, mimeType: uploadedMime })
+      });
+
+      const data = await resp.json();
+
+      if(!resp.ok || data.error){
+        throw new Error(data.error || ("HTTP_" + resp.status));
+      }
+
+      resultImg.src = "data:" + data.mimeType + ";base64," + data.data;
+      showState('result');
+
+    } catch(err){
+      console.error(err);
+      const m = String(err.message || err);
+      let msg = "生成失敗了,請稍後再試一次。";
+      if(m.includes("SERVER_NOT_CONFIGURED")){
+        msg = "伺服器尚未設定金鑰,請聯絡網站管理者確認 Netlify 環境變數設定。";
+      } else if(m.includes("UPSTREAM_ERROR")){
+        msg = "AI 服務暫時無法回應,請稍後再試一次。";
+      } else if(m.includes("NO_IMAGE_RETURNED")){
+        msg = "這次沒有成功產生圖片,請再試一次,或換一張照片試試看。";
+      }
+      errorText.textContent = msg;
+      showState('error');
+    } finally {
+      generateBtn.disabled = false;
+    }
+  }
+
+  generateBtn.addEventListener('click', generateImage);
+  retryBtn.addEventListener('click', generateImage);
+  errorRetryBtn.addEventListener('click', generateImage);
+
+  downloadBtn.addEventListener('click', () => {
+    const a = document.createElement('a');
+    a.href = resultImg.src;
+    a.download = "拜年圖.png";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  });
+
+  updateGenerateState();
+})();
+</script>
+
+</body>
+</html>
